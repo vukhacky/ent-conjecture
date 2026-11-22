@@ -1,5 +1,10 @@
 name: Verify the Lean formalization
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'lean/**'
+      - '.github/workflows/lean.yml'
   workflow_dispatch:
 permissions:
   contents: read
