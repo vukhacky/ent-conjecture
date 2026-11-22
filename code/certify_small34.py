@@ -1,19 +1,13 @@
-"""Exact-rational and Arb certificate for the n=3,4 octic entropy comparison.
-
-Run with Python 3, sympy and python-flint. No optimization or floating-point
-search is used. This is self-contained; it does not import other files.
-The accompanying proof is ENT_proof.tex.
-"""
+"""Exact rational and 192-bit Arb certificates for the octic entropy duals in dimensions 3 and 4."""
 from fractions import Fraction as Q
-from math import comb, factorial, prod
+from math import comb
 from pathlib import Path
-from time import perf_counter
 import hashlib
 import json
 import sympy as s
-from flint import arb, ctx
+from flint import arb
+from small_integrals import moment, entropy_standard, partition
 
-ctx.prec = 192
 PARAMETERS = {
     3: ['0.345', '0.081', '-0.0226', '0.00221'],
     4: ['0.4065', '0.0301', '-0.00563', '0.000518'],
@@ -21,22 +15,6 @@ PARAMETERS = {
 SLOPES = {3: Q(1,100), 4: Q(11,1000)}
 SLACK_BOUNDS = {3: Q(9,100000), 4: Q(1,50000)}
 THRESHOLDS = {3: Q(1,100), 4: Q(1,500)}
-
-
-def compositions(total, n):
-    if n == 1:
-        yield (total,)
-    else:
-        for k in range(total+1):
-            for rest in compositions(total-k,n-1):
-                yield (k,)+rest
-
-
-def moment(n,k,w):
-    return s.Add(*(s.Rational(3**k*factorial(2*k),
-                    prod(factorial(2*a+1) for a in ex))
-                  *s.prod(z**a for z,a in zip(w,ex))
-                  for ex in compositions(k,n)))
 
 
 def polynomial_certificate(n):
@@ -52,7 +30,7 @@ def polynomial_certificate(n):
     assert len(G.terms())==comb(d+n-1,n-1)-n
     records=[{'powers':list(ex),'coefficient':str(co)} for ex,co in G.terms()]
     digest=hashlib.sha256(json.dumps(records,sort_keys=True).encode()).hexdigest()
-    return f0, {'degree':8,'positive_coefficients':len(records),
+    return f0, {'potential_degree':8,'homogeneous_weight_degree':d,'positive_coefficients':len(records),
                 'minimum_coefficient':str(min(G.coeffs())),
                 'sha256':digest,'coefficients':records}
 
@@ -80,62 +58,6 @@ def schur_certificate_four():
             'A':str(A),'B':str(B),'C':str(C),'D':str(D),
             'endpoint_zero_margin':str(2*(A-lam)-4*C),
             'endpoint_one_margin':str(2*(A-lam)-(3*B+4*C-4*D))}
-
-
-def piece(n,k):
-    d=n-1
-    return [sum((-1)**j*comb(n,j)*comb(d,i)*(k-j)**(d-i)
-                for j in range(k+1)) for i in range(d+1)]
-
-
-def der(p):
-    return [j*p[j] for j in range(1,len(p))]
-
-
-def ev(p,x):
-    z=arb(0)
-    for c in reversed(p):
-        z=z*x+c
-    return z
-
-
-def entropy_standard(n,bits=13):
-    """h(sqrt(3/n) sum U_i), via Irwin-Hall density and exact end cells."""
-    m=2**bits; den=factorial(n-1)
-    value=2*(arb(n-1)/(n*n)+arb(den).log()/n)/den
-    for k in range(1,(n+1)//2):
-        p=piece(n,k); p1=der(p); p2=der(p1)
-        cells=m//2 if n%2 and k==n//2 else m
-        for j in range(cells):
-            x=arb(2*j+1,1)/(2*m); mid=arb(2*j+1)/(2*m)
-            f=ev(p,x)/den; f1=ev(p1,x)/den; f2=ev(p2,x)/den
-            assert f>0
-            gpp=-f2*(f.log()+1)-f1*f1/f
-            fm=ev(p,mid)/den
-            value+=2*(-fm*fm.log()/m+arb(0,1)*gpp.abs_upper()/(24*m**3))
-    return value+(arb(12)/n).log()/2
-
-
-def partition(cs,bits=15,R=8):
-    """Outward-rounded midpoint integral, with convex exponential tail bound."""
-    d=len(cs); c=list(map(arb,cs)); p=[arb(0)]*(2*d+1)
-    for j,v in enumerate(c):
-        p[2*j+2]=v
-    p1=der(p); p2=der(p1)
-    # W''(x)>0 for x>=R: scale leading term and every negative term
-    # by (x/R)^(2d-2), then discard all remaining positive terms.
-    tail=(2*d)*(2*d-1)*c[-1]*R**(2*d-2)
-    for j,v in enumerate(c[:-1]):
-        if Q(cs[j])<0:
-            tail+=(2*j+2)*(2*j+1)*v*R**(2*j)
-    assert tail>0 and ev(p1,arb(R))>0 and c[-1]>0
-    m=2**bits; step=arb(R)/m; value=arb(0)
-    for j in range(m):
-        x=arb(2*j+1,1)*R/(2*m); mid=arb(2*j+1)*R/(2*m)
-        phi=ev(p,x); d1=ev(p1,x); d2=ev(p2,x)
-        gpp=(d1*d1-d2)*(-phi).exp()
-        value+=2*((-ev(p,mid)).exp()*step+arb(0,1)*gpp.abs_upper()*step**3/24)
-    return value+arb(1,1)*(-ev(p,arb(R))).exp()/ev(p1,arb(R))
 
 
 def check_margins(checks):
@@ -220,12 +142,12 @@ def local_four():
 
 
 if __name__=='__main__':
-    start=perf_counter(); rows=[]
+    rows=[]
     for n in [3,4]:
         f0,polynomial=polynomial_certificate(n)
         if n==4:
             polynomial['primary_proof']=schur_certificate_four()
-        h=entropy_standard(n); Z=partition(PARAMETERS[n])
+        h=entropy_standard(n,bits=13); Z=partition(PARAMETERS[n],bits=15)
         slack=Z.log()+arb(str(f0))-h
         assert slack<arb(str(SLACK_BOUNDS[n]))
         assert SLACK_BOUNDS[n]<=(SLOPES[n]-Q(1,1000))*THRESHOLDS[n]
@@ -239,6 +161,6 @@ if __name__=='__main__':
         print(json.dumps({k:v for k,v in row.items() if k not in ['polynomial','local']}),flush=True)
     result={'arithmetic':'exact rational polynomials; Arb 192-bit outward rounding',
             'global_stability':'1/1000','all_pass':True,
-            'seconds':perf_counter()-start,'results':rows}
+            'results':rows}
     Path('small34_results.json').write_text(json.dumps(result,indent=2)+'\n')
-    print(json.dumps({'all_pass':True,'seconds':result['seconds']}))
+    print(json.dumps({'all_pass':True}))

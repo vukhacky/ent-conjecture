@@ -9,8 +9,10 @@ from fractions import Fraction as Q
 from math import factorial
 from pathlib import Path
 import json
-from time import perf_counter
 import sympy as sp
+
+if not __debug__:
+    raise RuntimeError("The certificate requires Python assertions. Run without -O.")
 
 
 def langevin_certificate():
@@ -44,9 +46,17 @@ def langevin_certificate():
     assert Q(25,49)*Q((N-2)*(N-3), (N-5)*(N-6)) < 1
     # The 7^N coefficient exceeds (5/2)*(N)_4*7^(N-4) for N>=17.
     # Shift N=17+z: all coefficients of the difference polynomial are positive.
-    shift = [Q(50190), Q(27784), Q(7195,2), Q(155), Q(5,2)]
+    x = sp.Symbol('x')
+    shifted_n = 17 + x
+    difference = sum(c * sp.FallingFactorial(shifted_n, k) * 7**(4-k)
+                     for k, c in terms[7])
+    difference -= sp.Rational(5,2) * sp.FallingFactorial(shifted_n, 4)
+    polynomial = sp.Poly(difference, x)
+    shift = [polynomial.nth(k) for k in range(polynomial.degree()+1)]
+    assert shift == [50190, 27784, sp.Rational(7195,2), 155, sp.Rational(5,2)]
     assert all(v > 0 for v in shift)
     return {'hyperbolic_identity': True, 'coeff_17': coef(17), 'coeff_19': coef(19),
+            'shift_coefficients': [str(v) for v in shift],
             'tail_margin_at_21': str(leading-negative), 'pass': True}
 
 
@@ -82,8 +92,6 @@ def fourier_certificate():
 
 
 if __name__ == '__main__':
-    start = perf_counter()
     result = {'langevin': langevin_certificate(), 'fourier': fourier_certificate()}
-    result['seconds'] = perf_counter()-start
     Path('large_results.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result,indent=2))

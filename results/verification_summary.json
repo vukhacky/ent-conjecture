@@ -1,1 +1,29 @@
-
+{
+  "all_passed": true,
+  "dependencies": {
+    "python-flint": "0.9.0",
+    "sympy": "1.14.0"
+  },
+  "certificates": [
+    {
+      "program": "code/certify_small34.py",
+      "output": "results/small34_results.json",
+      "sha256": "f7bab88231a5df15152cd5988ece0f6dad45c6778b6ac9a33ea24b4d9a1147b9"
+    },
+    {
+      "program": "code/certify_small56.py",
+      "output": "results/small56_results.json",
+      "sha256": "a523e55bc983ec3dd56e486c44ff91baf63f926a107fb42329d4ff72a94c8794"
+    },
+    {
+      "program": "code/ent_verify_large.py",
+      "output": "results/large_results.json",
+      "sha256": "86a571f954483d7e62f4e2fd79e7ba08acd85ab4489fc3e2d77977bb0f6fa4db"
+    },
+    {
+      "program": "code/ent_verify_curvature.py",
+      "output": "results/curvature_results.json",
+      "sha256": "0545ec2d547484a1684d7e582c7bdf24ae4a93ab325d068b793aaf79a1ec712b"
+    }
+  ]
+}

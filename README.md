@@ -1,104 +1,49 @@
 # Entropy maximization for cube projections
 
-**A proof of the Eskenazis–Nayar–Tkocz conjecture on entropy maximization for cube projections**  
-Vu Khac Ky, FPT University, Hanoi, Vietnam
+**A proof of the Eskenazis–Nayar–Tkocz conjecture on entropy maximization for cube projections**, by Vu Khac Ky, FPT University, Hanoi, Vietnam.
 
-This archive contains the manuscript, its complete LaTeX source, the figure,
-and the programs and recorded outputs for its finite proof certificates.
-The verification scripts are also available on
-[GitHub](https://github.com/vukhacky/ent-conjecture/).
+The paper studies the differential entropy of a projection of the uniform measure on the cube. It proves that, among unit directions, entropy is maximized precisely when all coordinates have equal magnitude. It also gives quantitative stability bounds and determines the asymptotically optimal coefficient. [Manuscript (PDF)](ENT_proof.pdf) · [LaTeX source](ENT_proof.tex)
 
-## Mathematical scope
+## Scope of verification
 
-The main theorem combines the proof here for dimensions at most 149 with
-Zhekai Pang's theorem for dimensions at least 150 (arXiv:2611.13533).
-The finite computation includes dimension 150. The proof explicitly depends
-on Pang's theorem and comparison lemma; the archive does not replace those
-external mathematical inputs.
+The paper uses Pang's theorem for the entropy maximum and equality characterization in dimensions at least 150. Its finite curvature calculation includes the overlap dimension 150 and extends through 255 for quantitative stability. The large-dimensional argument uses analytic estimates, and the sharp upper bound uses an entropic Edgeworth expansion. The Python programs verify the finite calculations in these arguments. The Lean project's README describes its theorem statements, assumptions, and build procedure. [Lean project](lean/)
 
-The quantitative result is obtained separately. Exact spline certificates
-cover dimensions 7 through 255; a quantitative refinement of Pang's Fourier
-estimates treats every dimension at least 256. Dimensions 3 through 6 use
-polynomial entropy duals and local estimates with certified integrals.
-The asymptotically optimal stability coefficient is 3/50.
+| Dimensions | Finite calculation in the manuscript | Program | Recorded output |
+| --- | --- | --- | --- |
+| 3 and 4 | Octic entropy duals, local integral bounds and rational margins for Proposition `prop:small` | [certify_small34.py](code/certify_small34.py) | [small34_results.json](results/small34_results.json) |
+| 5 and 6 | Schur bounds, Hessians, averaged remainders and local/global overlap for the same proposition | [certify_small56.py](code/certify_small56.py) | [small56_results.json](results/small56_results.json) |
+| 7–255 | Nonnegative integer Bernstein numerators for Theorem `thm:finite-curvature` | [ent_verify_curvature.py](code/ent_verify_curvature.py) | [curvature_results.json](results/curvature_results.json) |
+| 256 and above | Polynomial identity for tilted variance and rational bounds at 256 for Proposition `prop:large-curvature`. The paper supplies the extension to larger dimensions. | [ent_verify_large.py](code/ent_verify_large.py) | [large_results.json](results/large_results.json) |
 
-## Contents
+The two small-dimensional programs use exact rational moments and 192-bit Arb enclosures. The coefficient array and comparison parameters are defined near the top of each program. Both use the same integration and moment routines. [small_integrals.py](code/small_integrals.py)
 
-- `ENT_proof.pdf`: compiled paper.
-- `ENT_proof.tex`: complete LaTeX source, including the appendices and bibliography.
-- `figures/projection_density.pdf`: vector figure used by the manuscript.
-- `figures/projection_density.png`: raster preview.
-- `figures/figure_results.json`: illustrative density and entropy calculations.
-- `code/`: verification and figure-generation programs.
-- `results/`: actual JSON outputs and console logs of the accompanying run.
-- `SHA256.json`: checksums of the delivered files, excluding the manifest itself.
+The curvature run checks 16,372 spline cells and 8,347,574 Bernstein numerators. It cross-checks both the spline construction and the basis change by a second formula on all 30 cells in dimensions 7–12. The SHA-256 digest of the ordered numerators is `1c79243e41aa9141eb6896e6f60d4446cc9b0999d1fc085e7987ffa4818fd0b3`.
 
-## Reproduce the certificates
+## Reproduce the results
 
-Use Python 3.11 or newer. From the extracted archive directory:
+From the repository root, create a Python environment and install the pinned verification dependencies. The recorded results were reproduced with Python 3.12.14, python-flint 0.9.0 and SymPy 1.14.0.
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python3 -m pip install -r requirements.txt
-python3 code/run_all.py
+python -m pip install -r requirements.txt
+python code/run_all.py --check
 ```
 
-The entry point runs four independent checks and writes their outputs to
-`results/`. The curvature check is the longest. The timings and Python/package
-versions of the recorded run are in `results/verification_summary.json`.
-A nonzero exit status signals a failed verification. Assertions are part of
-the verifier: do not use Python's `-O` option or `PYTHONOPTIMIZE`.
+This command recomputes all four certificates from their defining formulas and compares all five JSON files with the copies in `results/`. The summary records a digest for each program's output. A failed check or a discrepancy exits with a nonzero status. Use ordinary Python with assertions enabled. [Verification summary](results/verification_summary.json)
 
-| Program | Verified component | Arithmetic |
-| --- | --- | --- |
-| `certify_small34.py` | Polynomial gaps and integral bounds in dimensions 3 and 4 | Exact rational arithmetic and 192-bit Arb balls |
-| `certify_small56.py` | Polynomial gaps, Hessian bounds and averaged remainders in dimensions 5 and 6 | Exact rational arithmetic and 192-bit Arb balls |
-| `ent_verify_curvature.py` | Third logarithmic derivative bound in dimensions 7 through 255 | Arbitrary-precision integers |
-| `ent_verify_large.py` | Scalar inequality and rational Fourier bounds for dimensions at least 256 | Symbolic identities and exact rational arithmetic |
-
-`small_integrals.py` contains the shared moment and certified integration
-routines for the dimension-5 and dimension-6 checks. The analytic proof of
-the local dimension-3 and dimension-4 estimates is given in the appendices.
-The large-dimension asymptotic arguments are analytic; the program verifies
-the finite identities and constants used in them.
-
-To reproduce only the finite curvature range needed to complete the conjecture
-with Pang's theorem (including the overlap dimension), run:
+To run the finite curvature check through the overlap dimension alone, use
 
 ```sh
-python3 code/ent_verify_curvature.py --last 150 --output curvature_7_150.json
+python code/ent_verify_curvature.py --last 150 --output curvature_7_150.json
 ```
 
-The full recorded curvature run checks 16,372 cells and 8,347,574 Bernstein
-numerators, including 30 independently cross-checked cells. Its certificate
-digest is `1c79243e41aa9141eb6896e6f60d4446cc9b0999d1fc085e7987ffa4818fd0b3`.
-Zero coefficients are permitted because the claimed inequality is non-strict;
-strict entropy maximality follows from the positive stability constant.
+## Revise the supplement
 
-## Reproduce the illustration
+Edit the mathematical source in `ENT_proof.tex` and the corresponding program under `code/`. The TeX labels in the table are stable search terms if section numbers change.
 
-```sh
-python3 -m pip install -r requirements-figure.txt
-python3 code/ent_make_figure.py --output-dir figures
-```
-
-Alternatively, `python3 code/run_all.py --figure` runs both the certificates
-and the figure generation. The plot compares the two-coordinate and full
-diagonal directions in the eight-dimensional cube. Its floating-point
-quadrature is independently compared with high-precision integration.
-These are illustrative numerical calculations and are not proof certificates.
-
-## Compile the manuscript
-
-A standard TeX Live installation with the packages named in `ENT_proof.tex`
-is sufficient. The manuscript uses the bundled figure at
-`figures/projection_density.pdf` and includes its bibliography directly.
-Compile from the archive directory:
-
-```sh
-pdflatex -interaction=nonstopmode -halt-on-error ENT_proof.tex
-pdflatex -interaction=nonstopmode -halt-on-error ENT_proof.tex
-```
-
-The equivalent commands are `make paper`, `make verify`, and `make figure`.
+- `make update-results` (or `python code/run_all.py`) regenerates the four certificate outputs and summary under `results/` once all four verifiers succeed.
+- `make verify` recomputes and compares the recorded results.
+- `make figure` regenerates the figure and the numerical data under `figures/` after `python -m pip install -r requirements-figure.txt`. The plot compares the two-coordinate and diagonal projections in dimension eight. Its floating-point quadrature is checked separately against high-precision integration. [Figure data](figures/figure_results.json)
+- `make paper` runs pdfLaTeX twice using the bundled figure. The LaTeX source includes its bibliography.
+- After reviewing the changes, `make update-checksums` refreshes `SHA256.json` for the manuscript and Python supplement, and `make checksums` verifies those files. Commit source and regenerated data together to keep each manuscript revision reproducible.

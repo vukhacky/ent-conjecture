@@ -3,6 +3,9 @@ from fractions import Fraction as Q
 from math import comb, factorial, prod
 import sympy as s
 from flint import arb, ctx
+if not __debug__:
+    raise RuntimeError("The certificate requires Python assertions. Run without -O.")
+
 ctx.prec=192
 
 def compositions(total,n):
@@ -50,6 +53,8 @@ def partition(cs,bits=17,R=8):
     d=len(cs);c=list(map(arb,cs));p=[arb(0)]*(2*d+1)
     for j,v in enumerate(c):p[2*j+2]=v
     p1=der(p);p2=der(p1)
+    # For x >= R, bound W'' from below by rescaling its negative terms
+    # to the degree of its leading term.
     tail=(2*d)*(2*d-1)*c[-1]*R**(2*d-2)
     for j,v in enumerate(c[:-1]):
         if Q(cs[j])<0:tail+=(2*j+2)*(2*j+1)*v*R**(2*j)

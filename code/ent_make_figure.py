@@ -14,7 +14,6 @@ from __future__ import annotations
 import argparse
 import json
 import math
-from fractions import Fraction
 from pathlib import Path
 
 import matplotlib
@@ -79,6 +78,8 @@ def high_precision_entropy(n: int):
 
 
 def main():
+    if not __debug__:
+        raise RuntimeError("The figure checks require Python assertions. Run without -O.")
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output-dir',type=Path,default=Path(__file__).resolve().parent)
     args=parser.parse_args()
@@ -123,10 +124,11 @@ def main():
     ax.grid(axis='y',color='#e6e6e6',lw=.55,zorder=0)
     ax.text(.985,.95,'Central density / Shannon entropy',
             transform=ax.transAxes,ha='right',va='top',fontsize=8)
-    ax.text(.985,.84,r'$T_2$:  $0.707107\;/\;0.846574$',
-            transform=ax.transAxes,ha='right',va='top',color=blue,fontsize=8.5)
-    ax.text(.985,.74,r'$T_8$:  $0.677925\;/\;0.869075$',
-            transform=ax.transAxes,ha='right',va='top',color=orange,fontsize=8.5)
+    for row, y, color in zip(rows, (.84, .74), (blue, orange)):
+        label = (rf"$T_{row['n']}$:  " +
+                 rf"${row['density_at_zero']:.6f}\;/\;{row['entropy_nats']:.6f}$")
+        ax.text(.985, y, label, transform=ax.transAxes, ha='right', va='top',
+                color=color, fontsize=8.5)
     difference=p8-p2
     lower.axhline(0,color='#777777',lw=.7)
     lower.fill_between(x,0,difference,where=difference>=0,

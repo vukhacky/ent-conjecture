@@ -1,0 +1,50 @@
+[
+  {
+    "n": 5,
+    "potential": [
+      ".43346",
+      ".01535",
+      "-.001769",
+      ".00017206"
+    ],
+    "lambda_value": "1/100",
+    "schur_margin": "10583/5468750",
+    "slack_ball": "[4.905e-6 +/- 4.04e-10]",
+    "slack_upper": "1/200000",
+    "delta_threshold": "7/12500",
+    "exterior_margin": "1/25000000",
+    "radius": "29/1000",
+    "gamma": "29/500",
+    "average_ball": "[7.63 +/- 7.43e-3]",
+    "average_upper": "77/10",
+    "hessian_ball": "[0.0278838 +/- 3.30e-8]",
+    "hessian_lower": "27/1000",
+    "local_margin": "228181/9000000000",
+    "overlap_z_upper": "2099559/2497900441",
+    "pass_all": true
+  },
+  {
+    "n": 6,
+    "potential": [
+      ".44749",
+      ".01001",
+      "-.0006493",
+      ".00007284"
+    ],
+    "lambda_value": "19/2000",
+    "schur_margin": "21937/87500000",
+    "slack_ball": "[1.344e-6 +/- 4.94e-10]",
+    "slack_upper": "7/5000000",
+    "delta_threshold": "1/6000",
+    "exterior_margin": "1/60000000",
+    "radius": "7/400",
+    "gamma": "1/25",
+    "average_ball": "[6.27 +/- 9.28e-3]",
+    "average_upper": "13/2",
+    "hessian_ball": "[0.0183009 +/- 5.28e-8]",
+    "hessian_lower": "17/1000",
+    "local_margin": "1714707/1120000000",
+    "overlap_z_upper": "119991/399880009",
+    "pass_all": true
+  }
+]

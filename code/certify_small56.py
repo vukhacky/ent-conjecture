@@ -9,10 +9,9 @@ from math import factorial
 from pathlib import Path
 import json
 import sympy as s
-from flint import arb, ctx, fmpq, fmpz_poly
+from flint import arb, fmpq, fmpz_poly
 from small_integrals import piece, ev, moment, entropy_standard, partition, hessian
 
-ctx.prec = 192
 PARAMETERS = {
     5: dict(cs=['.43346', '.01535', '-.001769', '.00017206'],
             lam=Q(1,100), slack=Q(1,200000), delta=Q(7,12500),
@@ -24,7 +23,7 @@ PARAMETERS = {
 
 
 def averaged_bound(n, gamma, bits=11, subdivisions=32):
-    """Enclose the upper Riemann integral M_n(gamma) from the note."""
+    """Enclose the upper Riemann integral M_n(gamma) defined in the manuscript."""
     g = fmpq(str(gamma)); mesh = 2**bits
     P = [piece(n,k) for k in range((n+1)//2)]
     N = []

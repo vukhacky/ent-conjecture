@@ -1,0 +1,79 @@
+module
+
+public import ENT.Certificate.KroneckerCore
+
+/-! Integer coefficients and kernel-checked identities for the spline cells in this module. -/
+
+set_option autoImplicit false
+set_option Elab.async false
+set_option maxRecDepth 1000000
+set_option maxHeartbeats 0
+set_option exponentiation.threshold 1000000
+
+open ENT.Certificate
+namespace ENT.Pilot.KroneckerData
+
+-- BEGIN CELL
+private noncomputable def ${tag}Data : Pure.CellData where
+  n := ${n}
+  k := ${k}
+  degreeBound := ${degree}
+  halfCell := ${half}
+  pCoeffs := [${pCoeffs}]
+  rCoeffs := [${rCoeffs}]
+  transformedCoeffs := [${transformedCoeffs}]
+  bernsteinNumerators := [${bernsteinNumerators}]
+
+private noncomputable def ${tag}RBase : ℤ := 2 ^ ${RBaseBits}
+private noncomputable def ${tag}BBase : ℤ := 2 ^ ${BBaseBits}
+
+private theorem ${tag}_spline : ${tag}Data.pCoeffs =
+    PureFast.fastSplineCoeffs ${n} ${k} := by decide +kernel
+
+private theorem ${tag}_r_bound :
+    Kronecker.sumAbs ${tag}Data.rCoeffs +
+      Kronecker.curvatureCoeffBound ${n} ${k}
+        ${tag}Data.pCoeffs.length (Kronecker.sumAbs ${tag}Data.pCoeffs) <
+      ${tag}RBase.natAbs := by decide +kernel
+
+private theorem ${tag}_r_eval :
+    Kronecker.intEval ${tag}RBase ${tag}Data.rCoeffs =
+      Kronecker.curvatureEval ${n} ${k} ${tag}Data.pCoeffs ${tag}RBase := by
+  decide +kernel
+
+
+private theorem ${tag}_b_bound :
+    Kronecker.sumAbs ${tag}Data.transformedCoeffs +
+      Kronecker.bernsteinCoeffBound ${degree} ${tag}Data.bernsteinNumerators <
+      ${tag}BBase.natAbs := by decide +kernel
+
+private theorem ${tag}_b_eval :
+    Kronecker.intEval ${tag}BBase ${tag}Data.transformedCoeffs =
+      (Kronecker.bernsteinEvalPair ${tag}BBase ${tag}Data.bernsteinNumerators).2 := by
+  decide +kernel
+
+
+private theorem ${tag}_valid : Kronecker.Valid ${tag}Data ${tag}RBase ${tag}BBase := by
+  refine {
+    n_lower := by decide +kernel
+    n_upper := by decide +kernel
+    cell := by decide +kernel
+    half := by decide +kernel
+    degree := by decide +kernel
+    r_length := by decide +kernel
+    spline := ${tag}_spline
+    r_bound := ${tag}_r_bound
+    r_eval := ${tag}_r_eval
+    transform := by decide +kernel
+    b_length := by decide +kernel
+    b_bound := ${tag}_b_bound
+    b_eval := ${tag}_b_eval
+    nonneg := by decide +kernel
+  }
+
+public theorem ${tag}_exists : ∃ c : Pure.CellData,
+    c.n = ${n} ∧ c.k = ${k} ∧
+      ∃ rBase bBase : ℤ, Kronecker.Valid c rBase bBase :=
+  ⟨${tag}Data, rfl, rfl, ${tag}RBase, ${tag}BBase, ${tag}_valid⟩
+-- END CELL
+end ENT.Pilot.KroneckerData
